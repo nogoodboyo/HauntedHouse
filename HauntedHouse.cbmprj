@@ -14,11 +14,11 @@
     <d64Name />
     <Comments>From the Osborne book Write Your Own Adeventure Programs.</Comments>
     <Author>Dave Thomas</Author>
-    <Email />
+    <Email>c64dba@gmail.com</Email>
     <AutoLaunchName>hauhse.prg</AutoLaunchName>
     <NoSingleFileBuild>False</NoSingleFileBuild>
     <CreatedWithVersion>CBM prg Studio 3.14.0</CreatedWithVersion>
-    <HasGitRepo>False</HasGitRepo>
+    <HasGitRepo>True</HasGitRepo>
     <GitIgnoreList />
     <Cartridge>
         <CrtBuildingCartridge>False</CrtBuildingCartridge>
@@ -72,10 +72,12 @@
                 <Region>26</Region>
                 <Region>30</Region>
                 <Region>77</Region>
+                <Region>80</Region>
+                <Region>86</Region>
             </Regions>
             <Breakpoints />
             <Bookmarks />
-            <Topmost>True</Topmost>
+            <Topmost>False</Topmost>
             <FileOpen>True</FileOpen>
         </SourceFile>
     </SourceFiles>
