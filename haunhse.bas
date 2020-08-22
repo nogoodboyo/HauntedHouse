@@ -252,6 +252,13 @@
 1570 ?"YOUR SCORE = ";s:if s>18 then ? "WELL DONE! YOU FINISHED THE GAME":END
 1580 input "PRESS RETURN TO CONINUE...";q$
 1590 return
+
+TODO find gaps in the verbs to add QUIT
+TODO QUIT should ask for option to start again or reset
+TODO SCORE should give progress score
+TODO add instructions and back story
+TODO add sound effects and maybe a sprite or 4 for some events
+
 #endregion
 
 #region "Iinitialisation"
