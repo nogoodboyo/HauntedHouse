@@ -1,350 +1,388 @@
-; ============================================================================
-; v: the number of verbs
-; w: the number of nouns (objects)
-; g: the number of "gettable" objects?????
-; NB: if these change value, the DIMmed arrays in @initialise will also need 
-;     to be changed
-; ============================================================================
-let v = 25
-let w = 36
-let g = 18
-; Off to read data in and initialise and populate arrays
+rem ============================================================================
+rem v: the number of verbs
+rem w: the number of nouns (objects)
+rem g: the number of "gettable" objects?????
+rem NB: if these change value, the DIMmed arrays in @initialise will also need 
+rem     to be changed
+rem ============================================================================
+
+let v! = 25
+let w! = 36
+let g! = 18
+
+dim c![36]   ;w
+dim f![36]   ;w
+
+f![18] = 1
+f![17] = 1
+f![2] = 1
+f![26] = 1
+f![28] = 1
+f![23] = 1
+
+let ll! = 60
+let rm! = 57
+let m$ = "OK"
+
+rem let charpos! = 0
+rem let index! = 0
+
+rem Create string terminator (null)
+rem dim strbuffer![1]
+rem strbuffer![0] = 0
+rem terminator$ = @strbuffer!
+
+rem Off to read data in and initialise and populate arrays
 gosub initialise
-;
-;#region "Screen play field setup"
-;90 ?"{clear}":?"HAUNTED HOUSE"
-;100 ?"----------------------------------------"
-;!- Print location
-;110 ?"YOUR LOCATION"
-;120 ?d$(rm)
-;!- Print exists
-;130 ?"EXITS:";
-;140 for i = 1 to len(r$(rm))
-;150 ?mid$(r$(rm), i, 1);",";
-;160 next i
-;170 ?
-;!- Print visible objects
-;180 for i = 1 to g
-;190 if l(i) = rm and f(i) = 0 then ?"YOU CAN SEE ";o$(i);" HERE"
-;200 next i
-;210 ?"========================================"
-;#endregion
-;
-;220 ?m$:m$="WHAT"
-;
-;#region "The parser"
-;!- Get user input
-;230 input "WHAT WILL YOU DO NOW";q$
-;!- ==========================================================================
-;!- Clear the working variables
-;!- v$: the verb string
-;!- w$: the noun string
-;!- vb: the index into the verb array - v$(i)
-;!- ob: the index into the noun array - o$(i)
-;!- 
-;!- Our aim is to find 2 words separated by a space. The 1st is the verb,
-;!- the 2nd (if present) is the noun (object).
-;!-
-;!- ==========================================================================
-;240 v$="":w$="":vb=0:ob=0
-;!- index through q$ 1 character at a time...
-;250 for i = 1 to len(q$)
-;!- If we find a space, we store the prior charactersd as the verb, if we don't
-;!- already have one...
-;260 if mid$(q$, i, 1) = " " and v$ = "" then v$ = left$(q$, i - 1)
-;!- Otherwise check the next character in q$. If it is not a space and we have
-;!- the verb (ie: v$ is not empty), then deem the remaining segment of q$
-;!- as the noun (object). Bail from the for...next
-;270 ifmid$(q$,i+1,1)<>" "andv$<>""thenw$=mid$(q$,i+1, len(q$) - 1):i = len(q$)
-;280 next i
-;!- If there is no noun, then assume the user only gave a verb.
-;290 if w$ = "" then v$ = q$
-;!- Determine which verb we have...
-;300 for i = 1 to v
-;310 if v$ = v$(i) then vb = i
-;320 next i
-;!- Determine which noun we have.
-;330 for i = 1 to w
-;340 if w$ = o$(i) then ob = i
-;350 next i
-;!- The noun is not recongnised...
-;360 if w$ > " " and ob = 0 then m$ = "THAT'S SILLY!"
-;!- The verb is not recognised, so set the verb to "HELP".
-;370 if vb = 0 then vb = v + 1
-;!- Error messages for bad input.
-;380 if w$ = "" then m$ = "I NEED TWO WORDS."
-;!- Invalid verb with valid object...
-;390 if vb > v and ob > 0 then m$ = "YOU CAN'T '" + q$ + "'"
-;!- Invalid verb and invalid object...
-;400 if vb > v and ob = 0 then m$ = "YOU DON'T MAKE SENSE"
-;!- Valid verb and valid object, but you don't have the object...
-;410 if vb < v and ob > 0 AND c(ob) = 0 then m$ = "YOU DON'T HAVE '" + w$ + "'"
-;#endregion
-;
-;
-;#region "Events and Environment Status Control"
-;415 if f(26) <> 1 or rm <> 13 or vb <> 21 then goto 430
-;420 if (int(rnd(1) * 3) + 1) <>3 then m$ = "BAT'S ATTACKING!":goto 90
-;430 if rm = 44 and (int(rnd(1) * 2) + 1) = 1 and f(24) <> 1 then f(27) = 1
-;440 if f(0) = 1 then ll = ll - 1
-;450 if ll < 1 then f(0) = 0
-;#endregion
-;
-;!- Branch to verb handlers...
-;459 if vb > 15 then 465
-;460 on vb gosub 500,570,640,640,640,640,640,640,640,980,980,1030,1070,1140,1180
-;462 goto 470
-;465 on vb - 15 gosub 1220,1250,1300,1340,1380,1400,1430,1460,1490,1510,1590
-;
-;!- Handle the candle as turns pass...
-;470 if ll = 10 then m$ = "YOUR CANDLE IS WANING!"
-;480 if ll = 1 then m$ = "YOU CANDLE IS OUT!"
-;490 goto 90
-;
-;#region "VERBS"
-;!- HELP
-;500 ? "WORDS I KNOW:"
-;510 for i = 1 to v
-;520 ? v$(i);","
-;530 next i
-;540 m$ = "":?
-;550 gosub 1580
-;560 return
-;
-;!- CARRYING?
-;570 ? "YOU ARE CARRYING:"
-;580 for i = 1 to g
-;590 if c(i) = 1 then ? o$(i);",";
-;600 next i
-;610 m$ = "":?
-;620 gosub 1580
-;630 return
-;
-;!- GO,N,S,W,E,U,D
-;640 d = 0
-;650 if ob = 0 then d = vb - 3
-;660 if ob = 19 then d = 1
-;670 if ob = 20 then d = 2
-;680 if ob = 21 then d = 3
-;690 if ob = 22 then d = 4
-;700 if ob = 23 then d = 5
-;710 if ob = 24 then d = 6
-;720 if rm = 20 then d = 5 then d = 1
-;730 if rm = 20 then d = 6 then d = 3
-;740 if rm = 22 then d = 6 then d = 2
-;750 if rm = 22 then d = 5 then d = 3
-;760 if rm = 36 then d = 6 then d = 1
-;770 if rm = 36 then d = 5 then d = 2
-;780 if f(14) = 1 then m$ = "CRASH! YOU FELL OUT OF THE TREE!":f(14) = 0:return
-;790 if f(27) = 1 and rm = 52 then m$ = "GHOSTS WILL NOT LET YOU MOVE":return
-;800 if rm=45 aN c(1)=1 aN f(34)=0 tH m$="A MAGICAL BARRIER TO THE WEST":return
-;810 if (rm=26 and f(0)=0) and (d=1 or d=4) then m$ = "YOU NEED A LIGHT":return
-;820 if rm = 54 and c(15) <> 1 then m$ = "YOU'RE STUCK!":return
-;830 ifc(15)=1aN nO(rm>52orrm<56orrm=47)tHm$="YOU CAN'T CARRY A BOAT!":return
-;840 if (rm>26 and rm<30) and f(0)=0 then m$="TOO DARK TO MOVE":return
-;850 f(35)=0:rl=len(r$(rm))
-;860 for i = 1 to rl
-;870 u$ = mid$(r$(rm), i, 1)
-;880 if (u$ ="N" and d=1 and f(35)=0) then rm = rm - 8:f(35) = 1
-;890 if (u$ ="S" and d=2 and f(35)=0) then rm = rm + 8:f(35) = 1
-;900 if (u$ ="W" and d=3 and f(35)=0) then rm = rm - 1:f(35) = 1
-;910 if (u$ ="e" and d=4 and f(35)=0) then rm = rm + 1:f(35) = 1
-;920 next i
-;930 m$ = "OK"
-;940 if f(35)=0 then m$="YOU CAN'T GO THAT WAY!"
-;950 if d<1 then m$= "GO WHERE?"
-;960 if rm=41 and f(23)=1 then r$(49)="SW":m$="THE DOOE SLAMS SHUT!":f(23)=0
-;970 return
-;
-;
-;
-;!- GET,TAKE
-;980 if ob>g then m$ = "I CAN'T GET " + w$:return
-;990 if l(ob) <> rm then m$ = "IT ISN'T HERE"
-;1000 if c(ob) = 2 then m$ = "YOU ALREADY HAVE IT"
-;1010 ifob>0andl(ob)=rm and f(ob)=0 then c(ob)=1:l(ob)=65:m$="YOU HAVE THE "+w$
-;1020 return
-;
-;!- OPEN
-;1030 if rm=43 and (ob=28 or ob=29) then f(17)=0:m$="DRAWER OPEN"
-;1040 if rm=28 and ob=25 then m$="IT'S LOCKED"
-;1050 if rm=38 and ob=32 then m$="THAT'S CREEPY!":f(2)=0
-;1060 return
-;
-;
-;!- EXAMINE
-;1070 if ob=30 then f(18)=0:m$="SOMETHING HERE!"
-;1080 if ob=31 then m$="THAT'S DISGUSTING!"
-;1090 if(ob=28 or ob=29) then m$="THERE'S A DRAWER..."
-;1100 if ob=33 or ob=5 then gosub 1140
-;1110 if rm=43 and ob=35 then m$="THERE IS SOMETHING BEYOND..."
-;1120 if ob=32 then gosub 1030
-;1130 return
-;
-;!- READ
-;1140 if rm=42 and ob=33 then m$="THEY ARE DEMONIC WORKS"
-;1150 if(ob=3orob=36)andc(3)=1andf(34)=0tHm$="USE THIS WORD WITH CARE 'XZANFAR'"
-;1160 ifc(5)=1 and ob=5 then m$="THE SCRIPT IS IN AN ALIEN TONGUE"
-;1170 return
-;
-;!- SAY
-;1180 m$="OK '" + w$ +"'"
-;1190 ifc(3)=1andob=34tHm$="*MAGIC OCCURS*":ifrm<>45thenrm=int(rnd(63)*63)+1
-;1200 if c(3)=1 and ob=34 and rm=45 then f(34) = 1
-;1210 return
-;
-;!- DIG
-;1220 if c(12)=1 then m$="YOU MADE A HOLE"
-;1230 ifc(12)=1aNrm=30tHm$="DUG BARS OUT":d$(rm)="HOLE IN A WALL":r$(rm)="NSE"
-;1240 return
-;
-;!- SWING
-;1250 if c(14)<>1 and rm=7 then m$="THIS IS NO TIME TO PLAY GAMES"
-;1260 if ob=14 and c(14)=1 then m$="YOU SWUNG IT"
-;1270 if ob=13 and c(13)=1 then m$"WHOOSH!"
-;1280 if ob<>13 or c(13)<>1 or rm<>43 then return
-;1285 r$(rm)="WN":d$(rm)="STUDY WITH SECRET ROOM":m$="YOU BROKE THE THIN WALL"
-;1290 return
-;
-;!- CLIMB
-;1300 if ob<>14 then return
-;1305 if c(14)=1 then m$="IT ISN'T ATTACHED TO ANYTHING!"
-;1308 if rm<>7 then return
-;1310 ifc(14)<>1aNf(14)=0tHm$="YOU SEE FOREST AND CLIFF SOUTH":f(14)=1:return
-;1320 if c(14)<>1 and f(14)=1 then m$="GOING DOWN!":f(14)=0
-;1330 return
-;
-;!- LIGHT
-;1340 if ob<>17 or c(17)<>1 then return
-;1345 if c(8)=0 then m$="IT WILL BURN YOUR HANDS"
-;1350 if c(9)=0 then m$="NOTHING TO LIGHT IT WITH"
-;1360 if c(9)=1 and c(8)=1 then m$="IT CASTS A FLICKERING LIGHT":f(0)-1
-;1370 return
-;
-;!- UNLIGHT
-;1380 if f(0)=1 then f(0)=0:m$="EXTINGUISHED"
-;1390 return
-;
-;!- SPRAY
-;1400 if ob=26 and c(16)=1 then m$="HISSSS"
-;1410 if ob=26 and c(16)=1 and f(26)=1 then f(26)=0:m$="PFFT! GOT 'EM"
-;1420 return
-;
-;!- USE
-;1430 if ob=10 and c(10)=1 and c(11)=1 then m$="SWITCHED ON":f(24)=1
-;1440 if f(27)=1 and f(24)=1 then m$="WHIZZ-VACUUMED UP THE GHOSTS!":f(27)=0
-;1450 return
-;
-;!- UNLOCK
-;1460 if rm=43 and (ob=27 or ob=28) then gosub 1030
-;1470 if rm<>28 or ob<>25 or f(25)<>0 then return
-;1475 ifc(18)=1tHf(25)=1:r$(rm)="SEW":d$(rm)="HUGE OPEN DOOR":m$="THE KEY TURNS!"
-;1480 return
-;
-;!- LEAVE
-;1490 if c(ob)=1 then c(ob)=0:l(ob)=rm:m$="DONE"
-;1500 return
-;
-;!- SCORE
-;1510 s=0
-;1520 for i = 1 to g
-;1530 if c(i)=1 then s = s + 1
-;1540 next i
-;1550 if s<>17 then ?"YOU HAVE MORE OBJECTS TO FIND...":goto 1580
-;1555 ifc(15)<>1aNrm<>57tH?"EVERYTHING FOUND!":?"RETURN TO GATE FOR FINAL SCORE"
-;1560 ifrm=57tH?"DOUBLE SCORE FOR REACHING HERE!":s=s*2
-;1570 ?"YOUR SCORE = ";s:if s>18 then ? "WELL DONE! YOU FINISHED THE GAME":END
-;1580 input "PRESS RETURN TO CONINUE...";q$
-;1590 return
-;
-;TODO find gaps in the verbs to add QUIT
-;TODO QUIT should ask for option to start again or reset
-;TODO SCORE should give progress score
-;TODO add instructions and back story
-;TODO add sound effects and maybe a sprite or 4 for some events
-;TODO add RAM command to check FRE(0) 
-;TODO add a command to switch timing in and out
-;
-;#endregion
-;
+
+gameloop:
+
+  print "{CLEAR}"
+  print "haunted house"
+  print "----------------------------------------"
+  print ""
+
+  rem Print location
+  print "your location"
+  print descriptions$[rm!]
+  print ""
+
+  rem Print exits
+  print "exits:"
+
+  charpos! = strlen!(roomexits$[rm!])
+  index! = 0
+
+  rem print roomexits$[rm!]
+
+  rem print "charpos"
+  rem print charpos!
+
+  if charpos! > 0 then
+
+    dim buffer![2]
+    x$ = @buffer!
+    
+    while index! < charpos!
+      rem print "index"
+      rem print index!
+      rem x$ = ""
+      strncpy x$, roomexits$[rm!] + index!, 1
+      print x$;
+      print ",";
+      index! = index! + 1
+
+    endwhile
+
+  endif
+
+  print ""
+
+rem  !- Print visible objects
+rem  180 for i = 1 to g
+rem  190 if l(i) = rm and f(i) = 0 then ?"YOU CAN SEE ";o$(i);" HERE"
+rem  200 next i
+rem  210 ?"========================================"
+
+
+rem 220 ?m$:m$="WHAT"
+rem 
+rem #region "The parser"
+rem !- Get user input
+rem 230 input "WHAT WILL YOU DO NOW";q$
+rem !- ==========================================================================
+rem !- Clear the working variables
+rem !- v$: the verb string
+rem !- w$: the noun string
+rem !- vb: the index into the verb array - v$(i)
+rem !- ob: the index into the noun array - o$(i)
+rem !- 
+rem !- Our aim is to find 2 words separated by a space. The 1st is the verb,
+rem !- the 2nd (if present) is the noun (object).
+rem !-
+rem !- ==========================================================================
+rem 240 v$="":w$="":vb=0:ob=0
+rem !- index through q$ 1 character at a time...
+rem 250 for i = 1 to len(q$)
+rem !- If we find a space, we store the prior charactersd as the verb, if we don't
+rem !- already have one...
+rem 260 if midescriptions$(q$, i, 1) = " " and v$ = "" then v$ = left$(q$, i - 1)
+rem !- Otherwise check the next character in q$. If it is not a space and we have
+rem !- the verb (ie: v$ is not empty), then deem the remaining segment of q$
+rem !- as the noun (object). Bail from the for...next
+rem 270 ifmidescriptions$(q$,i+1,1)<>" "andv$<>""thenw$=midescriptions$(q$,i+1, len(q$) - 1):i = len(q$)
+rem 280 next i
+rem !- If there is no noun, then assume the user only gave a verb.
+rem 290 if w$ = "" then v$ = q$
+rem !- Determine which verb we have...
+rem 300 for i = 1 to v
+rem 310 if v$ = v$(i) then vb = i
+rem 320 next i
+rem !- Determine which noun we have.
+rem 330 for i = 1 to w
+rem 340 if w$ = o$(i) then ob = i
+rem 350 next i
+rem !- The noun is not recongnised...
+rem 360 if w$ > " " and ob = 0 then m$ = "THAT'S SILLY!"
+rem !- The verb is not recognised, so set the verb to "HELP".
+rem 370 if vb = 0 then vb = v + 1
+rem !- Error messages for bad input.
+rem 380 if w$ = "" then m$ = "I NEED TWO WORDS."
+rem !- Invalid verb with valid object...
+rem 390 if vb > v and ob > 0 then m$ = "YOU CAN'T '" + q$ + "'"
+rem !- Invalid verb and invalid object...
+rem 400 if vb > v and ob = 0 then m$ = "YOU DON'T MAKE SENSE"
+rem !- Valid verb and valid object, but you don't have the object...
+rem 410 if vb < v and ob > 0 AND c(ob) = 0 then m$ = "YOU DON'T HAVE '" + w$ + "'"
+rem #endregion
+rem 
+rem 
+rem #region "Events and Environment Status Control"
+rem 415 if f(26) <> 1 or rm <> 13 or vb <> 21 then goto 430
+rem 420 if (int(rnd(1) * 3) + 1) <>3 then m$ = "BAT'S ATTACKING!":goto 90
+rem 430 if rm = 44 and (int(rnd(1) * 2) + 1) = 1 and f(24) <> 1 then f(27) = 1
+rem 440 if f(0) = 1 then ll = ll - 1
+rem 450 if ll < 1 then f(0) = 0
+rem #endregion
+rem 
+rem !- Branch to verb handlers...
+rem 459 if vb > 15 then 465
+rem 460 on vb gosub 500,570,640,640,640,640,640,640,640,980,980,1030,1070,1140,1180
+rem 462 goto 470
+rem 465 on vb - 15 gosub 1220,1250,1300,1340,1380,1400,1430,1460,1490,1510,1590
+rem 
+rem !- Handle the candle as turns pass...
+rem 470 if ll = 10 then m$ = "YOUR CANDLE IS WANING!"
+rem 480 if ll = 1 then m$ = "YOU CANDLE IS OUT!"
+rem 490 goto 90
+rem 
+rem #region "VERBS"
+rem !- HELP
+rem 500 ? "WORDS I KNOW:"
+rem 510 for i = 1 to v
+rem 520 ? v$(i);","
+rem 530 next i
+rem 540 m$ = "":?
+rem 550 gosub 1580
+rem 560 return
+rem 
+rem !- CARRYING?
+rem 570 ? "YOU ARE CARRYING:"
+rem 580 for i = 1 to g
+rem 590 if c(i) = 1 then ? o$(i);",";
+rem 600 next i
+rem 610 m$ = "":?
+rem 620 gosub 1580
+rem 630 return
+rem 
+rem !- GO,N,S,W,E,U,D
+rem 640 d = 0
+rem 650 if ob = 0 then d = vb - 3
+rem 660 if ob = 19 then d = 1
+rem 670 if ob = 20 then d = 2
+rem 680 if ob = 21 then d = 3
+rem 690 if ob = 22 then d = 4
+rem 700 if ob = 23 then d = 5
+rem 710 if ob = 24 then d = 6
+rem 720 if rm = 20 then d = 5 then d = 1
+rem 730 if rm = 20 then d = 6 then d = 3
+rem 740 if rm = 22 then d = 6 then d = 2
+rem 750 if rm = 22 then d = 5 then d = 3
+rem 760 if rm = 36 then d = 6 then d = 1
+rem 770 if rm = 36 then d = 5 then d = 2
+rem 780 if f(14) = 1 then m$ = "CRASH! YOU FELL OUT OF THE TREE!":f(14) = 0:return
+rem 790 if f(27) = 1 and rm = 52 then m$ = "GHOSTS WILL NOT LET YOU MOVE":return
+rem 800 if rm=45 aN c(1)=1 aN f(34)=0 tH m$="A MAGICAL BARRIER TO THE WEST":return
+rem 810 if (rm=26 and f(0)=0) and (d=1 or d=4) then m$ = "YOU NEED A LIGHT":return
+rem 820 if rm = 54 and c(15) <> 1 then m$ = "YOU'RE STUCK!":return
+rem 830 ifc(15)=1aN nO(rm>52orrm<56orrm=47)tHm$="YOU CAN'T CARRY A BOAT!":return
+rem 840 if (rm>26 and rm<30) and f(0)=0 then m$="TOO DARK TO MOVE":return
+rem 850 f(35)=0:rl=len(r$(rm))
+rem 860 for i = 1 to rl
+rem 870 u$ = midescriptions$(r$(rm), i, 1)
+rem 880 if (u$ ="N" and d=1 and f(35)=0) then rm = rm - 8:f(35) = 1
+rem 890 if (u$ ="S" and d=2 and f(35)=0) then rm = rm + 8:f(35) = 1
+rem 900 if (u$ ="W" and d=3 and f(35)=0) then rm = rm - 1:f(35) = 1
+rem 910 if (u$ ="e" and d=4 and f(35)=0) then rm = rm + 1:f(35) = 1
+rem 920 next i
+rem 930 m$ = "OK"
+rem 940 if f(35)=0 then m$="YOU CAN'T GO THAT WAY!"
+rem 950 if d<1 then m$= "GO WHERE?"
+rem 960 if rm=41 and f(23)=1 then r$(49)="SW":m$="THE DOOE SLAMS SHUT!":f(23)=0
+rem 970 return
+rem 
+rem 
+rem 
+rem !- GET,TAKE
+rem 980 if ob>g then m$ = "I CAN'T GET " + w$:return
+rem 990 if l(ob) <> rm then m$ = "IT ISN'T HERE"
+rem 1000 if c(ob) = 2 then m$ = "YOU ALREADY HAVE IT"
+rem 1010 ifob>0andl(ob)=rm and f(ob)=0 then c(ob)=1:l(ob)=65:m$="YOU HAVE THE "+w$
+rem 1020 return
+rem 
+rem !- OPEN
+rem 1030 if rm=43 and (ob=28 or ob=29) then f(17)=0:m$="DRAWER OPEN"
+rem 1040 if rm=28 and ob=25 then m$="IT'S LOCKED"
+rem 1050 if rm=38 and ob=32 then m$="THAT'S CREEPY!":f(2)=0
+rem 1060 return
+rem 
+rem 
+rem !- EXAMINE
+rem 1070 if ob=30 then f(18)=0:m$="SOMETHING HERE!"
+rem 1080 if ob=31 then m$="THAT'S DISGUSTING!"
+rem 1090 if(ob=28 or ob=29) then m$="THERE'S A DRAWER..."
+rem 1100 if ob=33 or ob=5 then gosub 1140
+rem 1110 if rm=43 and ob=35 then m$="THERE IS SOMETHING BEYOND..."
+rem 1120 if ob=32 then gosub 1030
+rem 1130 return
+rem 
+rem !- READ
+rem 1140 if rm=42 and ob=33 then m$="THEY ARE DEMONIC WORKS"
+rem 1150 if(ob=3orob=36)andc(3)=1andf(34)=0tHm$="USE THIS WORD WITH CARE 'XZANFAR'"
+rem 1160 ifc(5)=1 and ob=5 then m$="THE SCRIPT IS IN AN ALIEN TONGUE"
+rem 1170 return
+rem 
+rem !- SAY
+rem 1180 m$="OK '" + w$ +"'"
+rem 1190 ifc(3)=1andob=34tHm$="*MAGIC OCCURS*":ifrm<>45thenrm=int(rnd(63)*63)+1
+rem 1200 if c(3)=1 and ob=34 and rm=45 then f(34) = 1
+rem 1210 return
+rem 
+rem !- DIG
+rem 1220 if c(12)=1 then m$="YOU MADE A HOLE"
+rem 1230 ifc(12)=1aNrm=30tHm$="DUG BARS OUT":descriptions$(rm)="HOLE IN A WALL":r$(rm)="NSE"
+rem 1240 return
+rem 
+rem !- SWING
+rem 1250 if c(14)<>1 and rm=7 then m$="THIS IS NO TIME TO PLAY GAMES"
+rem 1260 if ob=14 and c(14)=1 then m$="YOU SWUNG IT"
+rem 1270 if ob=13 and c(13)=1 then m$"WHOOSH!"
+rem 1280 if ob<>13 or c(13)<>1 or rm<>43 then return
+rem 1285 r$(rm)="WN":descriptions$(rm)="STUDY WITH SECRET ROOM":m$="YOU BROKE THE THIN WALL"
+rem 1290 return
+rem 
+rem !- CLIMB
+rem 1300 if ob<>14 then return
+rem 1305 if c(14)=1 then m$="IT ISN'T ATTACHED TO ANYTHING!"
+rem 1308 if rm<>7 then return
+rem 1310 ifc(14)<>1aNf(14)=0tHm$="YOU SEE FOREST AND CLIFF SOUTH":f(14)=1:return
+rem 1320 if c(14)<>1 and f(14)=1 then m$="GOING DOWN!":f(14)=0
+rem 1330 return
+rem 
+rem !- LIGHT
+rem 1340 if ob<>17 or c(17)<>1 then return
+rem 1345 if c(8)=0 then m$="IT WILL BURN YOUR HANDS"
+rem 1350 if c(9)=0 then m$="NOTHING TO LIGHT IT WITH"
+rem 1360 if c(9)=1 and c(8)=1 then m$="IT CASTS A FLICKERING LIGHT":f(0)-1
+rem 1370 return
+rem 
+rem !- UNLIGHT
+rem 1380 if f(0)=1 then f(0)=0:m$="EXTINGUISHED"
+rem 1390 return
+rem 
+rem !- SPRAY
+rem 1400 if ob=26 and c(16)=1 then m$="HISSSS"
+rem 1410 if ob=26 and c(16)=1 and f(26)=1 then f(26)=0:m$="PFFT! GOT 'EM"
+rem 1420 return
+rem 
+rem !- USE
+rem 1430 if ob=10 and c(10)=1 and c(11)=1 then m$="SWITCHED ON":f(24)=1
+rem 1440 if f(27)=1 and f(24)=1 then m$="WHIZZ-VACUUMED UP THE GHOSTS!":f(27)=0
+rem 1450 return
+rem 
+rem !- UNLOCK
+rem 1460 if rm=43 and (ob=27 or ob=28) then gosub 1030
+rem 1470 if rm<>28 or ob<>25 or f(25)<>0 then return
+rem 1475 ifc(18)=1tHf(25)=1:r$(rm)="SEW":descriptions$(rm)="HUGE OPEN DOOR":m$="THE KEY TURNS!"
+rem 1480 return
+rem 
+rem !- LEAVE
+rem 1490 if c(ob)=1 then c(ob)=0:l(ob)=rm:m$="DONE"
+rem 1500 return
+rem 
+rem !- SCORE
+rem 1510 s=0
+rem 1520 for i = 1 to g
+rem 1530 if c(i)=1 then s = s + 1
+rem 1540 next i
+rem 1550 if s<>17 then ?"YOU HAVE MORE OBJECTS TO FIND...":goto 1580
+rem 1555 ifc(15)<>1aNrm<>57tH?"EVERYTHING FOUND!":?"RETURN TO GATE FOR FINAL SCORE"
+rem 1560 ifrm=57tH?"DOUBLE SCORE FOR REACHING HERE!":s=s*2
+rem 1570 ?"YOUR SCORE = ";s:if s>18 then ? "WELL DONE! YOU FINISHED THE GAME":END
+rem 1580 input "PRESS RETURN TO CONINUE...";q$
+rem 1590 return
+rem 
+rem TODO find gaps in the verbs to add QUIT
+rem TODO QUIT should ask for option to start again or reset
+rem TODO SCORE should give progress score
+rem TODO add instructions and back story
+rem TODO add sound effects and maybe a sprite or 4 for some events
+rem TODO add RAM command to check FRE(0) 
+rem TODO add a command to switch timing in and out
+rem 
+rem #endregion
+rem 
 
 end
 
 initialise:
-; =============================================================================
-; r$: location descriptions
-; d$: location exits
-; o$: nouns (objects)
-; v$: verbs
-; c(w): the player inventory array
-; l??????
-; f(w): object flag array, with 1 flag for each object
-;    v = 25
-;    w = 36
-;    g = 18
-; =============================================================================
+
+rem =============================================================================
+rem r$: location descriptions
+rem descriptions$: location exits
+rem o$: nouns (objects)
+rem v$: verbs
+rem c(w): the player inventory array
+rem l??????
+rem f(w): object flag array, with 1 flag for each object
+rem    v = 25
+rem    w = 36
+rem    g = 18
+rem =============================================================================
+  
   a$ = "hello yoyo!"
   print a$
-
-  dim descriptions$[63]
-  dim object$[36]  ;w
-  dim c[36]   ;w
-  dim f[36]   ;w
 
   data l[] = 46,38,35,50,13,18,28,42,10,25,26,4,2,7,47,60,43,32
 
   data verb$[] = "help","carrying?","go","n","s","w","e","u","d","get","take","open","examine","read","say", ~
                   "dig","swing","climb","light","unlight","spray","use","unlock","leave","score"
 
-  data roomexits$[] = "SE","WE","WE","SWE","WE","WE","SWE","WS"~
-                    ,"NS","SE","WE","NW","SE","W","NE","NSW"~
-                    ,"NS","NS","SE","WE","NWUD","SE","WSUD","NS"~
-                    ,"N","NS","NSE","WE","WE","NSW","NS","NS"~
-                    ,"S","NSE","NSW","S","NSUD","N","N","NS"~
-                    ,"NE","NW","NE","W","NSE","WE","W","NS"~
-                    ,"SE","NSW","E","WE","NW","S","SW","NW"~
-                    ,"NE","NWE","WE","WE","WE","NWE","NWE","W"
+  data roomexits$[] = "se","we","we","swe","we","we","swe","ws"~
+                    ,"ns","se","we","nw","se","w","ne","nsw"~
+                    ,"ns","ns","se","we","nwud","se","wsud","ns"~
+                    ,"n","ns","nse","we","we","nsw","ns","ns"~
+                    ,"s","nse","nsw","s","nsud","n","n","ns"~
+                    ,"ne","nw","ne","w","nse","we","w","ns"~
+                    ,"se","nsw","e","we","nw","s","sw","nw"~
+                    ,"ne","nwe","we","we","we","nwe","nwe","w"
+
+  data descriptions$[] = "dark corner","overgrown garden","by large woodpile","yard by rubbish"~
+      ,"weedpatch","forest","thick forest","blasted tree"~
+      ,"corner of house","entrance to kitchen","kitchen & grimy cooker"~
+      ,"scullery door"~
+      ,"room with inches of dust","rear turret room","clearing by house","path"~
+      ,"side if house","back of hallway","dark alcove","small dark room"~
+      ,"bottom of spiral staircase","wide passage","slippery steps","clifftop"~
+      ,"near crumbling wall","gloomy passage","pool of light"~
+      ,"impressive vaulted hallway"~
+      ,"hall by thick wooden door","ttrophy room","cellar with barred window"~
+      ,"cliff path"~
+      ,"cupboard with ahnging coat","front hall","sitting room","secret room"~
+      ,"steep marble stairs","dining room","deep cellar with coffin","cliff path"~
+      ,"closet","front lobby","library of evil books"~
+      ,"study with desk & hole in wall"~
+      ,"weird cobwebby room","very old chamber","spooky room","cliff path by marsh"~
+      ,"rubble strewn verandah","front porch","front tower","sloping corridor"~
+      ,"upper gallery","marsh by wall","marsh","soggy path"~
+      ,"twisted railing","path through iron gate","by railings","beneath front tower"~
+      ,"debris from crumbling facade","large fallen brickwork"~
+      ,"rotting stone arch","crumbling clifftop"
+
+  data object$[] = "painting","ring","magic spells","goblet","scroll","coins","status","candlestick"~
+                  ,"matches","vacuum","batteries","shovel","axe","rope","boat","aerosol","candle","key"~
+                  ,"north","south","east","west","up","down"~
+                  ,"door","bats","ghosts","drawer","desk","coat","rubbish"~
+                  ,"coffin","books","xzanfar","wall","spells"
 
   return
-
-
-;1820 data DARK CORNER,OVERGROWN GARDEN,BY LARGE WOODPILE,YARD BY RUBBISH
-;1830 data WEEDPATCH,FOREST,THICK FOREST,BLASTED TREE
-;1840 data CORNER OF HOUSE,ENTRANCE TO KITCHEN,KITCHEN & GRIMY COOKER
-;1845 data SCULLERY DOOR
-;1850 data ROOM WITH INCHES OF DUST,REAR TURRET ROOM,CLEARING BY HOUSE,PATH
-;1860 data SIDE IF HOUSE,BACK OF HALLWAY,DARK ALCOVE,SMALL DARK ROOM
-;1870 data BOTTOM OF SPIRAL STAIRCASE,WIDE PASSAGE,SLIPPERY STEPS,CLIFFTOP
-;1880 data NEAR CRUMBLING WALL,GLOOMY PASSAGE,POOL OF LIGHT
-;1885 data IMPRESSIVE VAULTED HALLWAY
-;1890 data HALL BY THICK WOODEN DOOR,TTROPHY ROOM,CELLAR WITH BARRED WINDOW
-;1895 data CLIFF PATH
-;1900 data CUPBOARD WITH AHNGING COAT,FRONT HALL,SITTING ROOM,SECRET ROOM
-;1910 data STEEP MARBLE STAIRS,DINING ROOM,DEEP CELLAR WITH COFFIN,CLIFF PATH
-;1920 data CLOSET,FRONT LOBBY,LIBRARY OF EVIL BOOKS
-;1925 data STUDY WITH DESK & HOLE IN WALL
-;1930 data WEIRD COBWEBBY ROOM,VERY OLD CHAMBER,SPOOKY ROOM,CLIFF PATH BY MARSH
-;1940 data RUBBLE STREWN VERANDAH,FRONT PORCH,FRONT TOWER,SLOPING CORRIDOR
-;1950 data UPPER GALLERY,MARSH BY WALL,MARSH,SOGGY PATH
-;1960 data TWISTED RAILING,PATH THROUGH IRON GATE,BY RAILINGS,BENEATH FRONT TOWER
-;1970 data DEBRIS FROM CRUMBLING FACADE,LARGE FALLEN BRICKWORK
-;1975 data ROTTING STONE ARCH,CRUMBLING CLIFFTOP
-;
-;1980 for i = 0 to 63
-;1990 read d$(i)
-;2000 next i
-;
-;2010 data PAINTING,RING,MAGIC SPELLS,GOBLET,SCROLL,COINS,STATUS,CANDLESTICK
-;2020 data MATCHES,VACUUM,BATTERIES,SHOVEL,AXE,ROPE,BOAT,AEROSOL,CANDLE,KEY
-;2030 data NORTH,SOUTH,EAST,WEST,UP,DOWN
-;2040 data DOOR,BATS,GHOSTS,DRAWER,DESK,COAT,RUBBISH
-;2050 data COFFIN,BOOKS,XZANFAR,WALL,SPELLS
-;
-;2060 for i = 1 to w
-;2070 read o$(i)
-;2080 next i
-;
-;2090 f(18)=1:f(17)=1:f(2)=1:f(26)=1:f(28)=1:f(23)=1:ll=60:rm=57:m$="OK"
-;
-;2100 return
-;#endregion
