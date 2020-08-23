@@ -52,29 +52,11 @@
     <!--End of screen designer settings-->
     <SourceFiles>
         <SourceFile>
-            <Name>Bouncing Ball.bas</Name>
-            <PrgName />
-            <FileType>1</FileType>
-            <IncludeInBuild>False</IncludeInBuild>
-            <Regions />
-            <Breakpoints />
-            <Bookmarks />
-            <Topmost>False</Topmost>
-            <FileOpen>False</FileOpen>
-        </SourceFile>
-        <SourceFile>
             <Name>haunhse.bas</Name>
             <PrgName />
             <FileType>1</FileType>
             <IncludeInBuild>True</IncludeInBuild>
-            <Regions>
-                <Region>9</Region>
-                <Region>26</Region>
-                <Region>30</Region>
-                <Region>77</Region>
-                <Region>80</Region>
-                <Region>86</Region>
-            </Regions>
+            <Regions />
             <Breakpoints />
             <Bookmarks />
             <Topmost>False</Topmost>
