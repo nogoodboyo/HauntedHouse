@@ -258,6 +258,8 @@ TODO QUIT should ask for option to start again or reset
 TODO SCORE should give progress score
 TODO add instructions and back story
 TODO add sound effects and maybe a sprite or 4 for some events
+TODO add RAM command to check FRE(0) 
+TODO add a command to switch timing in and out
 
 #endregion
 
