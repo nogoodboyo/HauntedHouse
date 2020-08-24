@@ -6,6 +6,10 @@ rem NB: if these change value, the DIMmed arrays in @initialise will also need
 rem     to be changed
 rem ============================================================================
 
+poke 53280, 11
+poke 53281, 0
+print "{LIGHT_GREEN}"
+
 let v! = 25
 let w! = 36
 let g! = 18
@@ -20,17 +24,27 @@ f![26] = 1
 f![28] = 1
 f![23] = 1
 
-let ll! = 60
-let rm! = 57
-let m$ = "OK"
+let ll! = 60  rem turns remaining on torch
+let rm! = 57  rem start location
+let m$ = "ok"
 
-rem let charpos! = 0
-rem let index! = 0
+let charpos! = 0
+let index! = 0
+dim buffer![2]
+x$ = @buffer!
 
-rem Create string terminator (null)
-rem dim strbuffer![1]
-rem strbuffer![0] = 0
-rem terminator$ = @strbuffer!
+
+rem usercmd$ hold the command types in by the player
+dim usercmdbuff![64]
+usercmd$ = @usercmdbuff!
+
+rem parser working variables
+dim pverbbuff![64]
+pverb$ = @pverbbuff!
+dim pnounbuff![64]
+pnoun$ = @pnounbuff!
+let vb! = 0
+let ob! = 0
 
 rem Off to read data in and initialise and populate arrays
 gosub initialise
@@ -48,95 +62,118 @@ gameloop:
   print ""
 
   rem Print exits
-  print "exits:"
+  print "exits:";
 
   charpos! = strlen!(roomexits$[rm!])
   index! = 0
 
-  rem print roomexits$[rm!]
-
-  rem print "charpos"
-  rem print charpos!
-
   if charpos! > 0 then
 
-    dim buffer![2]
-    x$ = @buffer!
-    
     while index! < charpos!
-      rem print "index"
-      rem print index!
-      rem x$ = ""
       strncpy x$, roomexits$[rm!] + index!, 1
       print x$;
-      print ",";
       index! = index! + 1
-
+      if charpos! - index! > 0 then  
+        print ",";
+      endif
     endwhile
 
   endif
 
   print ""
 
-rem  !- Print visible objects
-rem  180 for i = 1 to g
-rem  190 if l(i) = rm and f(i) = 0 then ?"YOU CAN SEE ";o$(i);" HERE"
-rem  200 next i
-rem  210 ?"========================================"
+  rem  Print visible objects
+  index! = 0
+
+  for index! = 0 to (g! - 1)
+    if l![index!] = rm! and f![index!] = 0 then 
+      print "you can see ";
+      print object$[index!];
+      print " here"
+    endif
+  next index!
+
+  print ""
+  print m$
+  
+  m$ = "what"
+
+rem The parser
+rem Get user input
+  print "what will you do now? ";
+  input usercmd$, 63, "abcdefghijklmnopqrstuvwxzy? "
+  print ""
+  print usercmd$
+
+  rem ==========================================================================
+  rem     Clear the working variables
+  rem     v$: the verb string
+  rem     w$: the noun string
+  rem     vb: the index into the verb array - v$(i)
+  rem     ob: the index into the noun array - o$(i)
+  rem     
+  rem     Our aim is to find 2 words separated by a space. The 1st is the verb,
+  rem     the 2nd (if present) is the noun (object).
+  rem ==========================================================================
+
+  pverb$ = ""
+  pnoun$ = ""
+  rem vb = 0
+  rem ob = 0
+
+  rem index through uservmd$ 1 character at a time...
+  charpos! = strlen!(usercmd$)
+  index! = 0
+
+  if charpos! > 0 then
+   
+    while index! < charpos!
+      strncpy x$, usercmd$ + index!, 1
+      print x$
+      index! = index! + 1
+      rem if charpos! - index! > 0 then  
+      rem   print ",";
+      rem endif
+    endwhile
+
+  endif
+
+  print ""
 
 
-rem 220 ?m$:m$="WHAT"
-rem 
-rem #region "The parser"
-rem !- Get user input
-rem 230 input "WHAT WILL YOU DO NOW";q$
-rem !- ==========================================================================
-rem !- Clear the working variables
-rem !- v$: the verb string
-rem !- w$: the noun string
-rem !- vb: the index into the verb array - v$(i)
-rem !- ob: the index into the noun array - o$(i)
-rem !- 
-rem !- Our aim is to find 2 words separated by a space. The 1st is the verb,
-rem !- the 2nd (if present) is the noun (object).
-rem !-
-rem !- ==========================================================================
-rem 240 v$="":w$="":vb=0:ob=0
-rem !- index through q$ 1 character at a time...
-rem 250 for i = 1 to len(q$)
-rem !- If we find a space, we store the prior charactersd as the verb, if we don't
-rem !- already have one...
-rem 260 if midescriptions$(q$, i, 1) = " " and v$ = "" then v$ = left$(q$, i - 1)
-rem !- Otherwise check the next character in q$. If it is not a space and we have
-rem !- the verb (ie: v$ is not empty), then deem the remaining segment of q$
-rem !- as the noun (object). Bail from the for...next
-rem 270 ifmidescriptions$(q$,i+1,1)<>" "andv$<>""thenw$=midescriptions$(q$,i+1, len(q$) - 1):i = len(q$)
-rem 280 next i
-rem !- If there is no noun, then assume the user only gave a verb.
-rem 290 if w$ = "" then v$ = q$
-rem !- Determine which verb we have...
-rem 300 for i = 1 to v
-rem 310 if v$ = v$(i) then vb = i
-rem 320 next i
-rem !- Determine which noun we have.
-rem 330 for i = 1 to w
-rem 340 if w$ = o$(i) then ob = i
-rem 350 next i
-rem !- The noun is not recongnised...
-rem 360 if w$ > " " and ob = 0 then m$ = "THAT'S SILLY!"
-rem !- The verb is not recognised, so set the verb to "HELP".
-rem 370 if vb = 0 then vb = v + 1
-rem !- Error messages for bad input.
-rem 380 if w$ = "" then m$ = "I NEED TWO WORDS."
-rem !- Invalid verb with valid object...
-rem 390 if vb > v and ob > 0 then m$ = "YOU CAN'T '" + q$ + "'"
-rem !- Invalid verb and invalid object...
-rem 400 if vb > v and ob = 0 then m$ = "YOU DON'T MAKE SENSE"
-rem !- Valid verb and valid object, but you don't have the object...
-rem 410 if vb < v and ob > 0 AND c(ob) = 0 then m$ = "YOU DON'T HAVE '" + w$ + "'"
-rem #endregion
-rem 
-rem 
+  rem 250 for i = 1 to len(q$)
+  rem !- If we find a space, we store the prior charactersd as the verb, if we don't
+  rem !- already have one...
+  rem 260 if midescriptions$(q$, i, 1) = " " and v$ = "" then v$ = left$(q$, i - 1)
+  rem !- Otherwise check the next character in q$. If it is not a space and we have
+  rem !- the verb (ie: v$ is not empty), then deem the remaining segment of q$
+  rem !- as the noun (object). Bail from the for...next
+  rem 270 ifmidescriptions$(q$,i+1,1)<>" "andv$<>""thenw$=midescriptions$(q$,i+1, len(q$) - 1):i = len(q$)
+  rem 280 next i
+  rem !- If there is no noun, then assume the user only gave a verb.
+  rem 290 if w$ = "" then v$ = q$
+  rem !- Determine which verb we have...
+  rem 300 for i = 1 to v
+  rem 310 if v$ = v$(i) then vb = i
+  rem 320 next i
+  rem !- Determine which noun we have.
+  rem 330 for i = 1 to w
+  rem 340 if w$ = o$(i) then ob = i
+  rem 350 next i
+  rem !- The noun is not recongnised...
+  rem 360 if w$ > " " and ob = 0 then m$ = "THAT'S SILLY!"
+  rem !- The verb is not recognised, so set the verb to "HELP".
+  rem 370 if vb = 0 then vb = v + 1
+  rem !- Error messages for bad input.
+  rem 380 if w$ = "" then m$ = "I NEED TWO WORDS."
+  rem !- Invalid verb with valid object...
+  rem 390 if vb > v and ob > 0 then m$ = "YOU CAN'T '" + q$ + "'"
+  rem !- Invalid verb and invalid object...
+  rem 400 if vb > v and ob = 0 then m$ = "YOU DON'T MAKE SENSE"
+  rem !- Valid verb and valid object, but you don't have the object...
+  rem 410 if vb < v and ob > 0 AND c(ob) = 0 then m$ = "YOU DON'T HAVE '" + w$ + "'"
+
+
 rem #region "Events and Environment Status Control"
 rem 415 if f(26) <> 1 or rm <> 13 or vb <> 21 then goto 430
 rem 420 if (int(rnd(1) * 3) + 1) <>3 then m$ = "BAT'S ATTACKING!":goto 90
@@ -343,7 +380,7 @@ rem ============================================================================
   a$ = "hello yoyo!"
   print a$
 
-  data l[] = 46,38,35,50,13,18,28,42,10,25,26,4,2,7,47,60,43,32
+  data l![] = 46,38,35,50,13,18,28,42,10,25,26,4,2,7,47,60,43,32
 
   data verb$[] = "help","carrying?","go","n","s","w","e","u","d","get","take","open","examine","read","say", ~
                   "dig","swing","climb","light","unlight","spray","use","unlock","leave","score"
