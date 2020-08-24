@@ -3,6 +3,10 @@
 !-w: the number of nouns (objects)
 !-g: the number of "gettable" objects?????
 !-============================================================================
+5 poke 53280, 11
+10 poke 53281, 0
+15 print "{light green}"
+
 70 v=25:w=36:g=18
 !- Off to read data in and initialise and populate arrays
 80 gosub 1600
